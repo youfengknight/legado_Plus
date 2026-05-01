@@ -260,7 +260,10 @@ class VideoPlayer: StandardGSYVideoPlayer {
 
     override fun setUp(url: String?, cacheWithPlay: Boolean, cachePath: File?, title: String?): Boolean {
         initDanmaku()
-        return super.setUp(url, cacheWithPlay, cachePath, title)
+        val result = super.setUp(url, cacheWithPlay, cachePath, title)
+        // 应用静音播放设置，根据用户配置决定是否静音
+        gsyVideoManager.setNeedMute(VideoPlay.mutePlay)
+        return result
     }
 
     private fun initDanmaku() {

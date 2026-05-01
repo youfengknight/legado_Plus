@@ -86,7 +86,7 @@ object VideoPlay : CoroutineScope by MainScope(){
         set(value) {
             videoPrefs.edit { putBoolean("fullBottomProgressBar", value) }
         }
-    /**  静音播放  **/
+    /**  静音播放，默认不静音  **/
     var mutePlay
         get() = videoPrefs.getBoolean("mutePlay", false)
         set(value) {

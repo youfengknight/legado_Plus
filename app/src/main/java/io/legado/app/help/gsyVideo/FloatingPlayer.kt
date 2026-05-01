@@ -11,6 +11,7 @@ import com.shuyu.gsyvideoplayer.video.StandardGSYVideoPlayer
 import com.shuyu.gsyvideoplayer.video.base.GSYVideoPlayer
 import io.legado.app.R
 import io.legado.app.model.VideoPlay
+import java.io.File
 
 
 class FloatingPlayer : StandardGSYVideoPlayer {
@@ -41,6 +42,13 @@ class FloatingPlayer : StandardGSYVideoPlayer {
 
     override fun getLayoutId(): Int {
         return R.layout.video_layout_floating
+    }
+
+    override fun setUp(url: String?, cacheWithPlay: Boolean, cachePath: File?, title: String?): Boolean {
+        val result = super.setUp(url, cacheWithPlay, cachePath, title)
+        // 应用静音播放设置，悬浮窗播放器也需要支持静音功能
+        gsyVideoManager.setNeedMute(VideoPlay.mutePlay)
+        return result
     }
 
 
