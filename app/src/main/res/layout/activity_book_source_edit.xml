@@ -123,14 +123,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
-            android:scrollbars="none"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             tools:listitem="@layout/item_source_edit" />
-
-        <io.legado.app.ui.book.source.edit.SourceEditScrollBar
-            android:id="@+id/scroll_bar"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
 
     </FrameLayout>
 

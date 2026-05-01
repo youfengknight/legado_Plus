@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:descendantFocusability="blocksDescendants">
 
-    <io.legado.app.ui.widget.recycler.scroller.FastScrollRecyclerView
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
