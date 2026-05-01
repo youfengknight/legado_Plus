@@ -19,6 +19,11 @@ class RecyclerViewAtPager2 : RecyclerView {
     private var startX = 0
     private var startY = 0
 
+    fun refreshSystemScrollBar() {
+        invalidate()
+        awakenScrollBars()
+    }
+
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
         when (ev.action) {
             MotionEvent.ACTION_DOWN -> {

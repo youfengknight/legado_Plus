@@ -225,6 +225,9 @@ class RssFragment() : VMBaseFragment<RssViewModel>(R.layout.fragment_rss), MainF
                 AppLog.put("订阅界面更新数据出错", it)
             }.flowOn(IO).collect {
                 adapter.setItems(it)
+                binding.recyclerView.post {
+                    binding.recyclerView.refreshSystemScrollBar()
+                }
             }
         }
     }
