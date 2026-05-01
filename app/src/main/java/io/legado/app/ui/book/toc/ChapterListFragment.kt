@@ -6,6 +6,7 @@ import android.content.Intent
 import android.graphics.PorterDuff
 import android.os.Bundle
 import android.view.View
+import android.view.ViewConfiguration
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import io.legado.app.R
@@ -60,6 +61,9 @@ class ChapterListFragment : VMBaseFragment<TocViewModel>(R.layout.fragment_chapt
 
     private fun initRecyclerView() {
         binding.recyclerView.layoutManager = mLayoutManager
+        binding.recyclerView.scrollBarSize =
+            ViewConfiguration.get(requireContext()).scaledScrollBarSize
+        binding.recyclerView.setHideScrollbar(false)
         binding.recyclerView.addItemDecoration(VerticalDivider(requireContext()))
         binding.recyclerView.adapter = adapter
     }
