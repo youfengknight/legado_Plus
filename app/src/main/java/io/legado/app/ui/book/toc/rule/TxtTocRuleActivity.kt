@@ -27,6 +27,7 @@ import io.legado.app.ui.widget.SelectActionBar
 import io.legado.app.ui.widget.recycler.DragSelectTouchHelper
 import io.legado.app.ui.widget.recycler.ItemTouchCallback
 import io.legado.app.ui.widget.recycler.VerticalDivider
+import io.legado.app.help.config.AppConfig
 import io.legado.app.utils.ACache
 import io.legado.app.utils.GSON
 import io.legado.app.utils.isAbsUrl
@@ -93,6 +94,9 @@ class TxtTocRuleActivity : VMBaseActivity<ActivityTxtTocRuleBinding, TxtTocRuleV
         recyclerView.setEdgeEffectColor(primaryColor)
         recyclerView.addItemDecoration(VerticalDivider(this@TxtTocRuleActivity))
         recyclerView.adapter = adapter
+        val showFastScroller = AppConfig.showBookshelfFastScroller
+        recyclerView.setFastScrollEnabled(showFastScroller)
+        recyclerView.isVerticalScrollBarEnabled = !showFastScroller
         // When this page is opened, it is in selection mode
         val dragSelectTouchHelper =
             DragSelectTouchHelper(adapter.dragSelectCallback).setSlideArea(16, 50)
