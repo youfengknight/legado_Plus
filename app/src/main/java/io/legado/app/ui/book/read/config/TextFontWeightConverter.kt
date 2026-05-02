@@ -87,14 +87,19 @@ class TextFontWeightConverter(context: Context, attrs: AttributeSet?) :
     /**
      * 显示粗略模式对话框
      * 提供三个固定选项：正常/粗体/细体
-     * 底部有"精细调整"按钮可切换到精细模式
+     * 标题栏右侧有"精细调整"按钮可切换到精细模式
      */
     private fun showCoarseModeDialog() {
         val items = context.resources.getStringArray(R.array.text_font_weight).toList()
         context.alert(titleResource = R.string.text_font_weight_converter) {
-            // 精细调整按钮，点击后切换到精细模式
-            neutralButton(R.string.text_bold_fine_mode) {
-                switchToFineMode()
+            // 使用自定义标题栏，包含标题和右上角的切换按钮
+            customTitle {
+                createTitleBar(
+                    context.getString(R.string.text_font_weight_converter),
+                    context.getString(R.string.text_bold_fine_mode)
+                ) {
+                    switchToFineMode()
+                }
             }
             // 三个选项列表
             items(items) { _, i ->
@@ -108,23 +113,28 @@ class TextFontWeightConverter(context: Context, attrs: AttributeSet?) :
     /**
      * 显示精细模式对话框
      * 提供 SeekBar 进度条，支持 100~900 的字重值
-     * 底部有"粗略调整"按钮可切换回粗略模式
+     * 标题栏右侧有"粗略调整"按钮可切换回粗略模式
      */
     private fun showFineModeDialog() {
         val currentValue = ReadBookConfig.textBold.coerceIn(100, 900)
         var tempValue = currentValue
         
-        context.alert(titleResource = R.string.text_font_weight_converter) {
+        context.alert {
+            // 使用自定义标题栏，包含标题和右上角的切换按钮
+            customTitle {
+                createTitleBar(
+                    context.getString(R.string.text_font_weight_converter),
+                    context.getString(R.string.text_bold_coarse_mode)
+                ) {
+                    switchToCoarseMode()
+                }
+            }
+            
             // 自定义视图：包含 SeekBar 和当前值显示
             customView {
                 createFineModeView(tempValue) { newValue ->
                     tempValue = newValue
                 }
-            }
-            
-            // 粗略调整按钮，点击后切换回粗略模式
-            neutralButton(R.string.text_bold_coarse_mode) {
-                switchToCoarseMode()
             }
             
             // 确认按钮，保存选择的字重值
@@ -136,6 +146,53 @@ class TextFontWeightConverter(context: Context, attrs: AttributeSet?) :
             
             // 取消按钮
             negativeButton(android.R.string.cancel) {}
+        }
+    }
+
+    /**
+     * 创建标题栏视图
+     * 包含左侧的标题文字和右侧的切换按钮
+     * 
+     * @param title 标题文字
+     * @param buttonText 右侧按钮文字
+     * @param onButtonClick 按钮点击回调
+     * @return 标题栏 LinearLayout
+     */
+    private fun createTitleBar(title: String, buttonText: String, onButtonClick: () -> Unit): View {
+        val bg = context.bottomBackground
+        val isLight = ColorUtils.isColorLight(bg)
+        val textColor = context.getPrimaryTextColor(isLight)
+        val accentColor = context.accentColor
+        
+        return LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(24.dpToPx(), 16.dpToPx(), 16.dpToPx(), 16.dpToPx())
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            
+            // 左侧标题
+            val titleTextView = TextView(context).apply {
+                text = title
+                textSize = 18f
+                setTextColor(textColor)
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            }
+            
+            // 右侧切换按钮
+            val switchButton = TextView(context).apply {
+                text = buttonText
+                textSize = 14f
+                setTextColor(accentColor)
+                setPadding(8.dpToPx(), 4.dpToPx(), 8.dpToPx(), 4.dpToPx())
+                setOnClickListener {
+                    onButtonClick()
+                }
+            }
+            
+            addView(titleTextView)
+            addView(switchButton)
         }
     }
 
