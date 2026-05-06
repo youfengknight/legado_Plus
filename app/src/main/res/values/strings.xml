@@ -719,6 +719,7 @@
     <string name="title_left">Left</string>
     <string name="title_center">Center</string>
     <string name="title_hide">Hide</string>
+    <string name="title_right">Right</string>
     <string name="add_to_group">Add to Group</string>
     <string name="save_image">Save image</string>
     <string name="no_default_path">No default path</string>

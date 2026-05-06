@@ -330,7 +330,7 @@ object ReadBookConfig {
         }
 
     /**
-     * 标题位置 0:居左 1:居中 2:隐藏
+     * 标题位置 0:居左 1:居中 2:隐藏 3:靠右
      */
     var titleMode: Int
         get() = config.titleMode
@@ -347,6 +347,11 @@ object ReadBookConfig {
      * 是否标题居中
      */
     val isMiddleTitle get() = titleMode == 1
+
+    /**
+     * 是否标题靠右
+     */
+    val isRightTitle get() = titleMode == 3
 
     var titleTopSpacing: Int
         get() = config.titleTopSpacing

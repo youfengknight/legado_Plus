@@ -43,6 +43,13 @@
                 android:layout_height="wrap_content"
                 android:padding="3dp"
                 android:text="@string/title_hide" />
+
+            <RadioButton
+                android:id="@+id/rb_title_mode4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="3dp"
+                android:text="@string/title_right" />
         </RadioGroup>
 
         <io.legado.app.ui.widget.DetailSeekBar

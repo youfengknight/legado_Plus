@@ -107,6 +107,7 @@ class TextChapterLayout(
     private val titleMode = ReadBookConfig.titleMode
     private val useZhLayout = ReadBookConfig.useZhLayout
     private val isMiddleTitle = ReadBookConfig.isMiddleTitle
+    private val isRightTitle = ReadBookConfig.isRightTitle
     private val textFullJustify = ReadBookConfig.textFullJustify
     private val adaptSpecialStyle = AppConfig.adaptSpecialStyle
     private val pageAnim = book.getPageAnim()
@@ -974,13 +975,16 @@ class TextChapterLayout(
                 }
                 layout.lineCount - 1 -> {
                     //最后一行、单行
-                    //标题x轴居中
-                    val startX = if (
-                        isTitle &&
-                        (isMiddleTitle || emptyContent || isVolumeTitle
-                                || imageStyle?.uppercase() == Book.imgStyleSingle)
-                    ) {
-                        (visibleWidth - desiredWidth) / 2
+                    //标题x轴对齐
+                    val startX = if (isTitle) {
+                        when {
+                            isMiddleTitle || emptyContent || isVolumeTitle
+                                    || imageStyle?.uppercase() == Book.imgStyleSingle -> {
+                                (visibleWidth - desiredWidth) / 2
+                            }
+                            isRightTitle -> visibleWidth - desiredWidth
+                            else -> 0f
+                        }
                     } else {
                         0f
                     }
@@ -990,13 +994,16 @@ class TextChapterLayout(
                     )
                 }
                 else -> {
-                    if (
-                        isTitle &&
-                        (isMiddleTitle || emptyContent || isVolumeTitle
-                                || imageStyle?.uppercase() == Book.imgStyleSingle)
-                    ) {
-                        //标题居中
-                        val startX = (visibleWidth - desiredWidth) / 2
+                    if (isTitle) {
+                        //标题对齐
+                        val startX = when {
+                            isMiddleTitle || emptyContent || isVolumeTitle
+                                    || imageStyle?.uppercase() == Book.imgStyleSingle -> {
+                                (visibleWidth - desiredWidth) / 2
+                            }
+                            isRightTitle -> visibleWidth - desiredWidth
+                            else -> 0f
+                        }
                         addCharsToLineNatural(
                             book, absStartX, textLine, words,
                             startX, false, widths, srcList, clickList
