@@ -179,8 +179,10 @@ object BackupController {
             writeListToJson(appDb.rssStarDao.all, "rssStar.json", webBackupPath)
             writeListToJson(appDb.replaceRuleDao.all, "replaceRule.json", webBackupPath)
             writeListToJson(appDb.readRecordDao.all, "readRecord.json", webBackupPath)
+            writeListToJson(appDb.readRecordDao.getAllDetailsList(), "readRecordDetail.json", webBackupPath)
+            writeListToJson(appDb.readRecordDao.getAllSessionsList(), "readRecordSession.json", webBackupPath)
             writeListToJson(appDb.searchKeywordDao.all, "searchHistory.json", webBackupPath)
-            // writeListToJson(appDb.ruleSubDao.all, "sourceSub.json", webBackupPath)
+            writeListToJson(appDb.ruleSubDao.all, "sourceSub.json", webBackupPath)
             writeListToJson(appDb.txtTocRuleDao.all, "txtTocRule.json", webBackupPath)
             writeListToJson(appDb.httpTTSDao.all, "httpTTS.json", webBackupPath)
             writeListToJson(appDb.keyboardAssistsDao.all, "keyboardAssists.json", webBackupPath)
@@ -326,12 +328,18 @@ object BackupController {
             BackupItemDef("readRecord.json", "阅读记录", "阅读时长统计记录") {
                 appDb.readRecordDao.all.size
             },
+            BackupItemDef("readRecordDetail.json", "阅读详情", "每本书每天的阅读统计") {
+                appDb.readRecordDao.getDetailsCount()
+            },
+            BackupItemDef("readRecordSession.json", "阅读会话", "每次阅读会话记录") {
+                appDb.readRecordDao.getSessionsCount()
+            },
             BackupItemDef("searchHistory.json", "搜索历史", "搜索关键词历史") {
                 appDb.searchKeywordDao.all.size
             },
-            // BackupItemDef("sourceSub.json", "订阅源", "书源订阅地址") {
-            //     appDb.ruleSubDao.all.size
-            // },
+            BackupItemDef("sourceSub.json", "订阅源", "书源订阅地址") {
+                appDb.ruleSubDao.all.size
+            },
             BackupItemDef("txtTocRule.json", "TXT目录规则", "本地TXT目录解析规则") {
                 appDb.txtTocRuleDao.all.size
             },
