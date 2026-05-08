@@ -60,6 +60,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.legado.app.R
 import io.legado.app.utils.sendToClip
 import io.legado.app.utils.toastOnUi
@@ -127,13 +128,7 @@ fun RegexTestScreen(
     initialIsRegex: Boolean = true
 ) {
     val context = LocalContext.current
-    // 获取卡片容器颜色（适配主题）
-    val containerColor = debugToolsCardContainerColor()
-    // 获取顶部栏容器颜色（适配主题）
-    val topBarColor = debugToolsTopBarContainerColor()
     
-    // ========== 状态定义 ==========
-    // 输入状态
     var pattern by remember { mutableStateOf(initialPattern) }         // 正则表达式
     var input by remember { mutableStateOf("") }                       // 待匹配文本
     var replacement by remember { mutableStateOf(initialReplacement) } // 替换文本
@@ -296,17 +291,16 @@ fun RegexTestScreen(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = topBarColor,
-                    scrolledContainerColor = topBarColor,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    scrolledContainerColor = MaterialTheme.colorScheme.secondary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSecondary,
+                    titleContentColor = MaterialTheme.colorScheme.onSecondary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSecondary
                 ),
                 title = {
                     Text(
                         text = stringResource(R.string.debug_regex_test),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp, fontWeight = FontWeight.Medium)
                     )
                 },
                 navigationIcon = {
@@ -327,8 +321,11 @@ fun RegexTestScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // ========== 正则表达式输入卡片 ==========
-            Surface(
-                color = containerColor,
+            Card(
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -439,8 +436,11 @@ fun RegexTestScreen(
             }
 
             // ========== 替换文本输入卡片 ==========
-            Surface(
-                color = containerColor,
+            Card(
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -464,8 +464,11 @@ fun RegexTestScreen(
             }
 
             // ========== 待匹配文本输入卡片 ==========
-            Surface(
-                color = containerColor,
+            Card(
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -536,15 +539,13 @@ fun RegexTestScreen(
                 StatusCard(
                     success = result.success,
                     message = result.message,
-                    matchCount = result.matchCount,
-                    containerColor = containerColor
+                    matchCount = result.matchCount
                 )
                 
                 // 匹配详情卡片（仅成功时显示）
                 if (result.success && result.matchInfo != null) {
                     MatchInfoCard(
                         matchInfo = result.matchInfo,
-                        containerColor = containerColor,
                         onCopy = { context.sendToClip(result.matchInfo) }
                     )
                 }
@@ -552,8 +553,7 @@ fun RegexTestScreen(
                 // 高亮显示卡片
                 result.highlightedText?.let { highlighted ->
                     HighlightCard(
-                        highlightedText = highlighted,
-                        containerColor = containerColor
+                        highlightedText = highlighted
                     )
                 }
                 
@@ -561,7 +561,6 @@ fun RegexTestScreen(
                 result.replacedText?.let { replaced ->
                     ReplacePreviewCard(
                         replacedText = replaced,
-                        containerColor = containerColor,
                         onCopy = { context.sendToClip(replaced) }
                     )
                 }
@@ -639,8 +638,7 @@ private fun findMatches(
 private fun StatusCard(
     success: Boolean,
     message: String,
-    matchCount: Int,
-    containerColor: Color
+    matchCount: Int
 ) {
     // 根据状态选择颜色和图标
     val backgroundColor = if (success) {
@@ -701,11 +699,13 @@ private fun StatusCard(
 @Composable
 private fun MatchInfoCard(
     matchInfo: String,
-    containerColor: Color,
     onCopy: () -> Unit
 ) {
-    Surface(
-        color = containerColor,
+    Card(
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -746,11 +746,13 @@ private fun MatchInfoCard(
  */
 @Composable
 private fun HighlightCard(
-    highlightedText: AnnotatedString,
-    containerColor: Color
+    highlightedText: AnnotatedString
 ) {
-    Surface(
-        color = containerColor,
+    Card(
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -786,11 +788,13 @@ private fun HighlightCard(
 @Composable
 private fun ReplacePreviewCard(
     replacedText: String,
-    containerColor: Color,
     onCopy: () -> Unit
 ) {
-    Surface(
-        color = containerColor,
+    Card(
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {

@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import io.legado.app.BuildConfig
 import io.legado.app.R
@@ -91,9 +92,6 @@ fun HttpDebugScreen(
     onBackClick: () -> Unit
 ) {
     val context = LocalContext.current
-    val containerColor = debugToolsCardContainerColor()
-    val topBarColor = debugToolsTopBarContainerColor()
-    // 协程作用域，用于异步请求
     val coroutineScope = rememberCoroutineScope()
     
     // OkHttp客户端
@@ -163,7 +161,7 @@ fun HttpDebugScreen(
         Dialog(onDismissRequest = { showRequestSrcDialog = false }) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = containerColor
+                color = MaterialTheme.colorScheme.surfaceVariant
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
@@ -199,17 +197,16 @@ fun HttpDebugScreen(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = topBarColor,
-                    scrolledContainerColor = topBarColor,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    scrolledContainerColor = MaterialTheme.colorScheme.secondary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSecondary,
+                    titleContentColor = MaterialTheme.colorScheme.onSecondary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSecondary
                 ),
                 title = {
                     Text(
                         text = stringResource(R.string.debug_http_request),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp, fontWeight = FontWeight.Medium)
                     )
                 },
                 navigationIcon = {
@@ -302,8 +299,11 @@ fun HttpDebugScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // URL输入卡片（含请求方法选择）
-            Surface(
-                color = containerColor,
+            Card(
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -359,8 +359,11 @@ fun HttpDebugScreen(
             }
 
             // User-Agent选择卡片
-            Surface(
-                color = containerColor,
+            Card(
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -414,8 +417,11 @@ fun HttpDebugScreen(
             }
 
             // 请求头输入卡片
-            Surface(
-                color = containerColor,
+            Card(
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -441,8 +447,11 @@ fun HttpDebugScreen(
 
             // 请求体输入卡片（仅POST方法显示）
             if (methodIndex == 1) {
-                Surface(
-                    color = containerColor,
+                Card(
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -537,8 +546,11 @@ fun HttpDebugScreen(
 
             // 响应头显示卡片
             if (responseHeaders.isNotEmpty()) {
-                Surface(
-                    color = containerColor,
+                Card(
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -573,8 +585,11 @@ fun HttpDebugScreen(
 
             // 响应体显示卡片
             if (responseBody.isNotEmpty()) {
-                Surface(
-                    color = containerColor,
+                Card(
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {

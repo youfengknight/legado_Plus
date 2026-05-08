@@ -137,7 +137,6 @@ class CheckSourceActivity : AppCompatActivity() {
         val isTransparentStatusBar = AppConfig.isTransparentStatusBar
         val statusBarColor = ThemeStore.statusBarColor(this, isTransparentStatusBar)
         setStatusBarColorAuto(statusBarColor, isTransparentStatusBar, true)
-        setLightStatusBar(ColorUtils.isColorLight(backgroundColor))
         if (AppConfig.immNavigationBar) {
             setNavigationBarColorAuto(ThemeStore.navigationBarColor(this))
         } else {

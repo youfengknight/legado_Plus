@@ -34,6 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.legado.app.R
 import io.legado.app.utils.sendToClip
 import io.legado.app.utils.toastOnUi
@@ -68,10 +69,7 @@ fun TimestampConvertScreen(
     onBackClick: () -> Unit
 ) {
     val context = LocalContext.current
-    val containerColor = debugToolsCardContainerColor()
-    val topBarColor = debugToolsTopBarContainerColor()
     
-    // 时间戳输入
     var timestamp by remember { mutableStateOf("") }
     // 日期字符串输入
     var dateStr by remember { mutableStateOf("") }
@@ -95,17 +93,16 @@ fun TimestampConvertScreen(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = topBarColor,
-                    scrolledContainerColor = topBarColor,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    scrolledContainerColor = MaterialTheme.colorScheme.secondary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSecondary,
+                    titleContentColor = MaterialTheme.colorScheme.onSecondary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSecondary
                 ),
                 title = {
                     Text(
                         text = stringResource(R.string.debug_timestamp),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp, fontWeight = FontWeight.Medium)
                     )
                 },
                 navigationIcon = {
@@ -126,8 +123,11 @@ fun TimestampConvertScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // 时间戳输入卡片
-            Surface(
-                color = containerColor,
+            Card(
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -189,8 +189,11 @@ fun TimestampConvertScreen(
             }
 
             // 日期格式选择卡片
-            Surface(
-                color = containerColor,
+            Card(
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -239,8 +242,11 @@ fun TimestampConvertScreen(
             }
 
             // 日期输入卡片
-            Surface(
-                color = containerColor,
+            Card(
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -319,8 +325,11 @@ fun TimestampConvertScreen(
             }
 
             // 结果显示卡片
-            Surface(
-                color = containerColor,
+            Card(
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
