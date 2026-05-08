@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <io.legado.app.lib.prefs.IconListPreference
-        android:defaultValue="ic_launcher"
+        android:defaultValue="launcher4"
         android:entries="@array/icon_names"
         android:entryValues="@array/icons"
         android:key="launcherIcon"
