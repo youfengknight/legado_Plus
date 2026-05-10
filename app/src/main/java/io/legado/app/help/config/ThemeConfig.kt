@@ -168,6 +168,13 @@ object ThemeConfig {
         save()
     }
 
+    fun toTopConfigs(positions: List<Int>) {
+        val configs = positions.map { configList[it] }
+        positions.sortedDescending().forEach { configList.removeAt(it) }
+        configList.addAll(0, configs)
+        save()
+    }
+
     fun addConfig(json: String): Int {
         val trimmedJson = json.trim { it < ' ' }
         var count = 0

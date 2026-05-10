@@ -90,6 +90,13 @@ class ThemeListDialog : BaseDialogFragment(R.layout.dialog_recycler_view),
                 adapter.notifyDataSetChanged()
                 binding.toolBar.setTitle(getString(R.string.selected, selectedPositions.size))
             }
+            R.id.menu_to_top -> {
+                if (selectedPositions.isEmpty()) {
+                    toastOnUi("请先选择主题")
+                    return true
+                }
+                toTopSelected()
+            }
             R.id.menu_export -> {
                 if (selectedPositions.isEmpty()) {
                     toastOnUi("请先选择主题")
@@ -161,6 +168,14 @@ class ThemeListDialog : BaseDialogFragment(R.layout.dialog_recycler_view),
             }
             noButton()
         }
+    }
+
+    // 移动选中主题到顶部
+    private fun toTopSelected() {
+        val positions = selectedPositions.sorted()
+        ThemeConfig.toTopConfigs(positions)
+        exitMultiSelectMode()
+        initData()
     }
 
     fun delete(index: Int) {
