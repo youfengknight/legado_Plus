@@ -149,6 +149,10 @@ class BgTextConfigDialog : BaseDialogFragment(R.layout.dialog_read_bg_text) {
         ivImport.setColorFilter(primaryTextColor, PorterDuff.Mode.SRC_IN)
         ivExport.setColorFilter(primaryTextColor, PorterDuff.Mode.SRC_IN)
         ivDelete.setColorFilter(primaryTextColor, PorterDuff.Mode.SRC_IN)
+        ivUnderlineSetting.setColorFilter(secondaryTextColor, PorterDuff.Mode.SRC_IN)
+        ivUnderlineSetting.setOnClickListener {
+            UnderlineWidthDialog().show(childFragmentManager, "underlineWidthDialog")
+        }
         tvBgAlpha.setTextColor(primaryTextColor)
         tvBgImage.setTextColor(primaryTextColor)
         if (ReadBook.book?.isImage == true) {

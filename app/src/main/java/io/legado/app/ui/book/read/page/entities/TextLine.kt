@@ -268,8 +268,9 @@ data class TextLine(
      * 绘制全局下划线（朗读标记除外），支持实线/虚线/波浪线/点线
      */
     private fun drawUnderline(canvas: Canvas, underlineMode: Int) {
+        val underlineWidth = ReadBookConfig.durConfig.underlineWidth
         val paint = TextPaint(ChapterProvider.contentPaint).apply {
-            strokeWidth = 2.dpToPx().toFloat()
+            strokeWidth = underlineWidth.dpToPx().toFloat()
             style = android.graphics.Paint.Style.STROKE
             isAntiAlias = true
         }
@@ -279,16 +280,17 @@ data class TextLine(
         val endX = lineEnd
         when (underlineMode) {
             1 -> canvas.drawLine(startX, lineY, endX, lineY, paint)
-            2 -> drawDashedLine(canvas, paint, startX, lineY, endX)
-            3 -> drawWavyLine(canvas, paint, startX, lineY, endX)
-            4 -> drawDottedLine(canvas, paint, startX, lineY, endX)
+            2 -> drawDashedLine(canvas, paint, startX, lineY, endX, underlineWidth)
+            3 -> drawWavyLine(canvas, paint, startX, lineY, endX, underlineWidth)
+            4 -> drawDottedLine(canvas, paint, startX, lineY, endX, underlineWidth)
         }
     }
 
     /**
      * 绘制虚线下划线，每段8dp线段+5dp间隔
      */
-    private fun drawDashedLine(canvas: Canvas, paint: Paint, startX: Float, y: Float, endX: Float) {
+    private fun drawDashedLine(canvas: Canvas, paint: Paint, startX: Float, y: Float, endX: Float, underlineWidth: Int) {
+        paint.strokeWidth = underlineWidth.dpToPx().toFloat()
         val dashLen = 8.dpToPx().toFloat()
         val gapLen = 5.dpToPx().toFloat()
         var x = startX
@@ -302,7 +304,8 @@ data class TextLine(
     /**
      * 绘制点线下划线，2dp圆点+4dp间隔
      */
-    private fun drawDottedLine(canvas: Canvas, paint: Paint, startX: Float, y: Float, endX: Float) {
+    private fun drawDottedLine(canvas: Canvas, paint: Paint, startX: Float, y: Float, endX: Float, underlineWidth: Int) {
+        paint.strokeWidth = underlineWidth.dpToPx().toFloat()
         val dotSize = 2.dpToPx().toFloat()
         val gapLen = 4.dpToPx().toFloat()
         paint.strokeCap = Paint.Cap.ROUND
@@ -317,7 +320,8 @@ data class TextLine(
     /**
      * 绘制波浪线下划线，使用贝塞尔曲线实现
      */
-    private fun drawWavyLine(canvas: Canvas, paint: Paint, startX: Float, y: Float, endX: Float) {
+    private fun drawWavyLine(canvas: Canvas, paint: Paint, startX: Float, y: Float, endX: Float, underlineWidth: Int) {
+        paint.strokeWidth = underlineWidth.dpToPx().toFloat()
         val path = Path()
         val waveAmplitude = 3.dpToPx().toFloat()
         val waveLength = 12.dpToPx().toFloat()
@@ -469,17 +473,18 @@ data class TextLine(
         underlineColor: Int,
         svgPathStr: String = "",
     ) {
+        val underlineWidth = ReadBookConfig.durConfig.underlineWidth
         val paint = TextPaint(ChapterProvider.contentPaint).apply {
             color = underlineColor
-            strokeWidth = 2.dpToPx().toFloat()
+            strokeWidth = underlineWidth.dpToPx().toFloat()
             style = android.graphics.Paint.Style.STROKE
         }
         val distance = (ChapterProvider.lineSpacingExtra * 10 - 11).coerceIn(-1f, 10f)
         val lineY = height + distance.dpToPx()
         when (underlineMode) {
             1 -> canvas.drawLine(startX, lineY, endX, lineY, paint)
-            2 -> drawDashedLine(canvas, paint, startX, lineY, endX)
-            3 -> drawWavyLine(canvas, paint, startX, lineY, endX)
+            2 -> drawDashedLine(canvas, paint, startX, lineY, endX, underlineWidth)
+            3 -> drawWavyLine(canvas, paint, startX, lineY, endX, underlineWidth)
             4 -> {
                 val lineGap = 3.dpToPx().toFloat()
                 val line2Y = lineY + lineGap + 2.dpToPx()

@@ -76,10 +76,22 @@
             android:text="@string/text_underline"
             android:textColor="@color/primaryText" />
 
+        <ImageView
+            android:id="@+id/iv_underline_setting"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="8dp"
+            android:background="?attr/selectableItemBackground"
+            android:contentDescription="@string/setting"
+            android:src="@drawable/ic_settings"
+            android:tooltipText="@string/underline_width_setting"
+            tools:ignore="UnusedAttribute" />
+
         <androidx.appcompat.widget.AppCompatSpinner
             android:id="@+id/sp_underline"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:theme="@style/Spinner" />
     </LinearLayout>
 

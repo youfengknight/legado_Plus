@@ -1430,4 +1430,8 @@
     <string name="adding_books">正在添加 %d 本书…</string>
     <string name="add_books_success">成功添加 %d 本书</string>
     <string name="all_books_in_shelf">列表书籍已全部在书架</string>
+    <string name="underline_width_setting">下划线粗细</string>
+    <string name="underline_width">粗细</string>
+    <string name="underline_width_thin">细</string>
+    <string name="underline_width_thick">粗</string>
 </resources>
