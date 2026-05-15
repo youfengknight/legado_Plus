@@ -17,6 +17,7 @@ object HelpDocManager {
         HelpDoc("书源字段规则类型", "书源字段规则类型"),
         HelpDoc("订阅源字段规则类型", "订阅源字段规则类型"),
         HelpDoc("订阅源机制详解", "订阅源机制详解"),
+        HelpDoc("预注入JS机制详解", "订阅源预注入JS机制"),
         HelpDoc("jsPackagesHelp", "JS Packages使用指南"),
         HelpDoc("替换规则流程与机制", "替换规则流程与机制"),
         HelpDoc("下拉刷新流程与机制", "下拉刷新流程与机制"),
@@ -26,6 +27,7 @@ object HelpDocManager {
         HelpDoc("图片加载机制", "图片加载机制"),
         HelpDoc("网络请求机制", "网络请求机制"),
         HelpDoc("错误处理机制", "错误处理机制"),
+        HelpDoc("懒加载与缓存机制分析", "懒加载与缓存机制"),
         HelpDoc("书源登录信息与运行变量备份机制", "书源登录信息与运行变量备份机制")
     )
     

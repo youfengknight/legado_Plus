@@ -19,6 +19,10 @@ class ScrollPageDelegate(readView: ReadView) : PageDelegate(readView) {
     private val slopSquare get() = readView.pageSlopSquare2
 
     var noAnim: Boolean = false
+    
+    private var lastScrollY = 0
+    private var maxScrollY = 0
+    private val prefetchThreshold = 0.7f
 
     override fun onAnimStart(animationSpeed: Int) {
         readView.onScrollAnimStart()
@@ -65,10 +69,30 @@ class ScrollPageDelegate(readView: ReadView) : PageDelegate(readView) {
 
     override fun onScroll() {
         curPage.scroll((touchY - lastY).toInt())
+        checkLazyPrefetch()
     }
 
     override fun onDraw(canvas: Canvas) {
         // nothing
+    }
+    
+    private fun checkLazyPrefetch() {
+        val textChapter = ReadBook.curTextChapter ?: return
+        val lazyContent = textChapter.lazyContent ?: return
+        
+        if (lazyContent.isCompleted.get()) return
+        
+        val pageOffset = curPage.getPageOffset()
+        val textPage = curPage.textPage
+        val pageHeight = textPage.height
+        
+        if (pageHeight <= 0) return
+        
+        val progress = -pageOffset.toFloat() / pageHeight
+        
+        if (progress > prefetchThreshold) {
+            lazyContent.prefetchNextPage()
+        }
     }
 
     private fun onScroll(event: MotionEvent) {

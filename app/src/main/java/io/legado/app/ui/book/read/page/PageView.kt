@@ -414,6 +414,10 @@ class PageView(context: Context) : FrameLayout(context) {
     fun scroll(offset: Int) {
         binding.contentTextView.scroll(offset)
     }
+    
+    fun getPageOffset(): Int {
+        return binding.contentTextView.pageOffset
+    }
 
     /**
      * 更新是否开启选择功能

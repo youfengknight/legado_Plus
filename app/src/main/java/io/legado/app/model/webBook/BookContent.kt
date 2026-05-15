@@ -1,6 +1,7 @@
 package io.legado.app.model.webBook
 
 import io.legado.app.R
+import io.legado.app.constant.AppLog
 import io.legado.app.constant.AppPattern
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.Book
@@ -28,6 +29,7 @@ import splitties.init.appCtx
 import io.legado.app.help.book.isAudio
 import io.legado.app.help.book.isOnLineTxt
 import io.legado.app.help.book.isVideo
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 
 /**
@@ -47,6 +49,96 @@ import kotlinx.coroutines.currentCoroutineContext
  * @see ContentRule 正文规则定义
  */
 object BookContent {
+
+    suspend fun analyzeContentLazy(
+        scope: CoroutineScope,
+        bookSource: BookSource,
+        book: Book,
+        bookChapter: BookChapter,
+        baseUrl: String,
+        redirectUrl: String,
+        body: String?,
+        nextChapterUrl: String?,
+        callback: LazyContentCallback? = null
+    ): Pair<String, LazyContentManager?> {
+        body ?: throw NoStackTraceException(
+            appCtx.getString(R.string.error_get_web_content, baseUrl)
+        )
+        Debug.log(bookSource.bookSourceUrl, "≡获取成功:${baseUrl}")
+        Debug.log(bookSource.bookSourceUrl, body, state = 40)
+        
+        val mNextChapterUrl = if (nextChapterUrl.isNullOrEmpty()) {
+            appDb.bookChapterDao.getChapter(book.bookUrl, bookChapter.index + 1)?.url
+                ?: appDb.bookChapterDao.getChapter(book.bookUrl, 0)?.url
+        } else {
+            nextChapterUrl
+        }
+        
+        val contentRule = bookSource.getContentRule()
+        val nextContentUrlRule = contentRule.nextContentUrl ?: ""
+        
+        AppLog.put("懒加载: analyzeContentLazy nextContentUrlRule=$nextContentUrlRule")
+        
+        if (nextContentUrlRule.isBlank()) {
+            AppLog.put("懒加载: nextContentUrlRule 为空，走传统模式")
+            val contentData = analyzeContent(
+                book, baseUrl, redirectUrl, body, contentRule, bookChapter, bookSource, mNextChapterUrl
+            )
+            return Pair(contentData.first, null)
+        }
+        
+        val analyzeRule = AnalyzeRule(book, bookSource)
+        analyzeRule.setContent(body, baseUrl)
+        val rUrl = analyzeRule.setRedirectUrl(redirectUrl)
+        analyzeRule.setCoroutineContext(currentCoroutineContext())
+        analyzeRule.setChapter(bookChapter)
+        analyzeRule.setNextChapterUrl(mNextChapterUrl)
+        
+        var content = analyzeRule.getString(contentRule.content, unescape = false)
+        if (!book.isAudio && !book.isVideo) {
+            val useHtmlMap = mutableMapOf<String, String>()
+            if (AppConfig.adaptSpecialStyle) {
+                content = AppPattern.useHtmlRegex.replace(content) { matchResult ->
+                    val placeholder = "{usehtml_${useHtmlMap.size}}"
+                    useHtmlMap[placeholder] = matchResult.value
+                    placeholder
+                }
+            }
+            content = HtmlFormatter.formatKeepImg(content, rUrl)
+            if (content.indexOf('&') > -1) {
+                content = StringEscapeUtils.unescapeHtml4(content)
+            }
+            useHtmlMap.forEach { (placeholder, originalContent) ->
+                content = content.replace(placeholder, originalContent)
+            }
+        }
+        
+        val nextUrl = analyzeRule.getStringList(nextContentUrlRule, isUrl = true)?.firstOrNull()
+        
+        Debug.log(bookSource.bookSourceUrl, "┌获取正文下一页链接")
+        Debug.log(bookSource.bookSourceUrl, "└下一页懒加载已开启，将在阅读时按需加载")
+        
+        val lazyManager = LazyContentManager(
+            scope = scope,
+            bookSource = bookSource,
+            book = book,
+            bookChapter = bookChapter,
+            baseUrl = baseUrl,
+            redirectUrl = redirectUrl,
+            initialBody = body,
+            nextChapterUrl = mNextChapterUrl,
+            nextContentUrlRule = nextContentUrlRule,
+            contentRule = contentRule.content ?: "",
+            webJs = contentRule.webJs,
+            callback = callback
+        )
+        
+        lazyManager.pages[0] = PageContent(content, nextUrl)
+        
+        AppLog.put("懒加载: 创建 LazyContentManager 成功，第一页内容长度=${content.length}, nextUrl=$nextUrl")
+        
+        return Pair(content, lazyManager)
+    }
 
     /**
      * 解析章节正文
@@ -324,13 +416,18 @@ object BookContent {
         }
         //获取下一页链接
         if (getNextPageUrl) {
-            val nextUrlRule = contentRule.nextContentUrl
-            if (!nextUrlRule.isNullOrEmpty()) {
+            if (bookSource.nextPageLazyLoad) {
                 Debug.log(bookSource.bookSourceUrl, "┌获取正文下一页链接", printLog)
-                analyzeRule.getStringList(nextUrlRule, isUrl = true)?.let {
-                    nextUrlList.addAll(it)
+                Debug.log(bookSource.bookSourceUrl, "└下一页懒加载已开启，请在阅读界面查看效果", printLog)
+            } else {
+                val nextUrlRule = contentRule.nextContentUrl
+                if (!nextUrlRule.isNullOrEmpty()) {
+                    Debug.log(bookSource.bookSourceUrl, "┌获取正文下一页链接", printLog)
+                    analyzeRule.getStringList(nextUrlRule, isUrl = true)?.let {
+                        nextUrlList.addAll(it)
+                    }
+                    Debug.log(bookSource.bookSourceUrl, "└" + nextUrlList.joinToString("，"), printLog)
                 }
-                Debug.log(bookSource.bookSourceUrl, "└" + nextUrlList.joinToString("，"), printLog)
             }
         }
         return Pair(content, nextUrlList)

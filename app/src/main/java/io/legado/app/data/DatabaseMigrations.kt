@@ -1,6 +1,7 @@
 package io.legado.app.data
 
 import androidx.room.DeleteColumn
+import androidx.room.RenameColumn
 import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
@@ -471,5 +472,13 @@ object DatabaseMigrations {
             """.trimIndent())
         }
     }
+
+    @Suppress("ClassName")
+    @RenameColumn(
+        tableName = "book_sources",
+        fromColumnName = "nextPagePreload",
+        toColumnName = "nextPageLazyLoad"
+    )
+    class Migration_95_96 : AutoMigrationSpec
 
 }

@@ -12,6 +12,7 @@ import com.google.gson.ToNumberPolicy
 import com.google.gson.internal.LinkedTreeMap
 import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonWriter
+import io.legado.app.data.entities.BookSource
 import io.legado.app.data.entities.rule.BookInfoRule
 import io.legado.app.data.entities.rule.ContentRule
 import io.legado.app.data.entities.rule.ExploreRule
@@ -41,6 +42,7 @@ val INITIAL_GSON: Gson by lazy {
 
 val GSON: Gson by lazy {
     INITIAL_GSON.newBuilder()
+        .registerTypeAdapter(BookSource::class.java, BookSource.jsonSerializer)
         .registerTypeAdapter(ExploreRule::class.java, ExploreRule.jsonDeserializer)
         .registerTypeAdapter(SearchRule::class.java, SearchRule.jsonDeserializer)
         .registerTypeAdapter(BookInfoRule::class.java, BookInfoRule.jsonDeserializer)

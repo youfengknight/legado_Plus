@@ -1435,6 +1435,7 @@
     <string name="rule_call_back">回调操作（callBackJs）</string>
     <string name="time_hour">小时</string>
     <string name="custom_button">定制按钮</string>
+    <string name="next_page_lazy_load">下一页懒加载</string>
     <string name="welcome_show_time">欢迎页显示时间</string>
     <string name="welcome_show_time_summary">设为0不显示欢迎页</string>
     <string name="domain">域名</string>

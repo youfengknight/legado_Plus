@@ -61,7 +61,8 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
     //滚动参数
     private val pageFactory get() = callBack.pageFactory
     private val pageDelegate get() = callBack.pageDelegate
-    private var pageOffset = 0
+    var pageOffset = 0
+        private set
     private var autoPager: AutoPager? = null
     private var isScroll = false
     private val renderRunnable by lazy { Runnable { preRenderPage() } }

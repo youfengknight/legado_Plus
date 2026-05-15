@@ -28,6 +28,8 @@ import io.legado.app.help.config.ReadBookConfig
 import io.legado.app.help.coroutine.Coroutine
 import io.legado.app.help.globalExecutor
 import io.legado.app.model.localBook.TextFile
+import io.legado.app.model.webBook.LazyContentCallback
+import io.legado.app.model.webBook.LazyContentManager
 import io.legado.app.model.webBook.WebBook
 import io.legado.app.service.BaseReadAloudService
 import io.legado.app.service.CacheBookService
@@ -654,8 +656,12 @@ object ReadBook : CoroutineScope by MainScope() {
         Coroutine.async {
             val book = book!!
             val chapter = appDb.bookChapterDao.getChapter(book.bookUrl, index) ?: return@async
+            AppLog.put("懒加载: loadContent 开始 章节${chapter.index}")
             if (addLoading(index)) {
-                BookHelp.getContent(book, chapter)?.let {
+                val cachedContent = BookHelp.getContent(book, chapter)
+                AppLog.put("懒加载: 缓存内容=$cachedContent, bookSource=$bookSource, nextPageLazyLoad=${bookSource?.nextPageLazyLoad}")
+                cachedContent?.let {
+                    AppLog.put("懒加载: 走缓存分支")
                     contentLoadFinish(
                         book,
                         chapter,
@@ -664,12 +670,67 @@ object ReadBook : CoroutineScope by MainScope() {
                         resetPageOffset,
                         success = success
                     )
-                } ?: download(
-                    downloadScope,
-                    chapter,
-                    resetPageOffset
-                )
+                } ?: let {
+                    val bookSource = bookSource
+                    if (bookSource != null && bookSource.nextPageLazyLoad) {
+                        AppLog.put("懒加载: 走懒加载分支")
+                        loadContentLazy(book, chapter, upContent, resetPageOffset, success)
+                    } else {
+                        AppLog.put("懒加载: 走下载分支")
+                        download(
+                            downloadScope,
+                            chapter,
+                            resetPageOffset
+                        )
+                    }
+                }
             }
+        }.onError {
+            AppLog.put("加载正文出错\n${it.localizedMessage}")
+        }
+    }
+
+    private fun loadContentLazy(
+        book: Book,
+        chapter: BookChapter,
+        upContent: Boolean,
+        resetPageOffset: Boolean,
+        success: (() -> Unit)?
+    ) {
+        Coroutine.async {
+            val bookSource = bookSource!!
+            val lazyCallback = object : LazyContentCallback {
+                override fun onPageLoading(pageIndex: Int) {
+                    AppLog.put("懒加载: 章节${chapter.index} 第${pageIndex + 1}页 开始加载")
+                }
+                override fun onPageLoaded(pageIndex: Int, content: String) {
+                    AppLog.put("懒加载回调: 章节${chapter.index} 第${pageIndex + 1}页 加载完成，准备追加到排版")
+                    curTextChapter?.let { textChapter ->
+                        textChapter.appendContent(listOf(content))
+                        AppLog.put("懒加载回调: 已追加到 TextChapter")
+                        kotlinx.coroutines.GlobalScope.launch(Main) {
+                            callBack?.upContent(0, false)
+                        }
+                    }
+                }
+            }
+            val (content, lazyContent) = WebBook.getContentLazyAwait(
+                scope = this,
+                bookSource = bookSource,
+                book = book,
+                bookChapter = chapter,
+                nextChapterUrl = null,
+                callback = lazyCallback
+            )
+            contentLoadFinishLazy(
+                book = book,
+                chapter = chapter,
+                content = content,
+                lazyContent = lazyContent,
+                upContent = upContent,
+                resetPageOffset = resetPageOffset
+            )
+            success?.invoke()
         }.onError {
             AppLog.put("加载正文出错\n${it.localizedMessage}")
         }
@@ -685,8 +746,39 @@ object ReadBook : CoroutineScope by MainScope() {
             try {
                 val book = book!!
                 val chapter = appDb.bookChapterDao.getChapter(book.bookUrl, index)!!
-                val content = BookHelp.getContent(book, chapter) ?: downloadAwait(chapter)
-                contentLoadFinishAwait(book, chapter, content, upContent, resetPageOffset)
+                val bookSource = bookSource
+                if (BookHelp.getContent(book, chapter) != null) {
+                    val content = BookHelp.getContent(book, chapter)!!
+                    contentLoadFinishAwait(book, chapter, content, upContent, resetPageOffset)
+                } else if (bookSource != null && bookSource.nextPageLazyLoad) {
+                    val lazyCallback = object : LazyContentCallback {
+                        override fun onPageLoading(pageIndex: Int) {
+                            AppLog.put("懒加载: 章节${chapter.index} 第${pageIndex + 1}页 开始加载")
+                        }
+                        override fun onPageLoaded(pageIndex: Int, content: String) {
+                            AppLog.put("懒加载回调: 章节${chapter.index} 第${pageIndex + 1}页 加载完成，准备追加到排版")
+                            curTextChapter?.let { textChapter ->
+                                textChapter.appendContent(listOf(content))
+                                AppLog.put("懒加载回调: 已追加到 TextChapter")
+                                kotlinx.coroutines.GlobalScope.launch(Main) {
+                                    callBack?.upContent(0, false)
+                                }
+                            }
+                        }
+                    }
+                    val (content, lazyContent) = WebBook.getContentLazyAwait(
+                        scope = this@ReadBook,
+                        bookSource = bookSource,
+                        book = book,
+                        bookChapter = chapter,
+                        nextChapterUrl = null,
+                        callback = lazyCallback
+                    )
+                    contentLoadFinishLazy(book, chapter, content, lazyContent, upContent, resetPageOffset)
+                } else {
+                    val content = downloadAwait(chapter)
+                    contentLoadFinishAwait(book, chapter, content, upContent, resetPageOffset)
+                }
                 success?.invoke()
             } catch (e: Exception) {
                 AppLog.put("加载正文出错\n${e.localizedMessage}")
@@ -941,6 +1033,95 @@ object ReadBook : CoroutineScope by MainScope() {
             }
             AppLog.put("ChapterProvider ERROR", it)
             appCtx.toastOnUi("ChapterProvider ERROR:\n${it.stackTraceStr}")
+        }
+    }
+
+    suspend fun contentLoadFinishLazy(
+        book: Book,
+        chapter: BookChapter,
+        content: String,
+        lazyContent: LazyContentManager?,
+        upContent: Boolean = true,
+        resetPageOffset: Boolean = true
+    ) {
+        removeLoading(chapter.index)
+        if (chapter.index !in durChapterIndex - 1..durChapterIndex + 1) {
+            return
+        }
+        try {
+            val contentProcessor = ContentProcessor.get(book.name, book.origin)
+            val displayTitle = chapter.getDisplayTitle(
+                contentProcessor.getTitleReplaceRules(),
+                book.getUseReplaceRule(),
+                replaceBook = book.toReplaceBook()
+            )
+            val contents = contentProcessor
+                .getContent(book, chapter, content, includeTitle = false)
+            ensureActive()
+            val textChapter = ChapterProvider.getTextChapterAsync(
+                this, book, chapter, displayTitle, contents, simulatedChapterSize
+            )
+            AppLog.put("懒加载: contentLoadFinishLazy lazyContent=$lazyContent")
+            if (lazyContent != null) {
+                textChapter.lazyContent = lazyContent
+                textChapter.useLazyLoading = true
+                AppLog.put("懒加载: 已设置 lazyContent 到 TextChapter, 章节${chapter.index}, useLazyLoading=${textChapter.useLazyLoading}")
+            } else {
+                AppLog.put("懒加载: lazyContent 为 null，未启用懒加载")
+            }
+            when (val offset = chapter.index - durChapterIndex) {
+                0 -> {
+                    curTextChapter?.cancelLayout()
+                    withContext(Main) {
+                        curTextChapter = textChapter
+                    }
+                    callBack?.upMenuView()
+                    var available = false
+                    for (page in textChapter.layoutChannel) {
+                        val index = page.index
+                        if (!available && page.containPos(durChapterPos)) {
+                            if (upContent) {
+                                callBack?.upContent(offset, resetPageOffset)
+                            }
+                            available = true
+                        }
+                        if (upContent && isScroll) {
+                            if (max(index - ReadConstants.SCROLL_PAGE_UPDATE_THRESHOLD, 0) < durPageIndex) {
+                                callBack?.upContent(offset, false)
+                            }
+                        }
+                        callBack?.onLayoutPageCompleted(index, page)
+                    }
+                    if (upContent) callBack?.upContent(offset, !available && resetPageOffset)
+                    curPageChanged()
+                    callBack?.contentLoadFinish()
+                }
+                -1 -> {
+                    prevTextChapter?.cancelLayout()
+                    withContext(Main) {
+                        prevTextChapter = textChapter
+                    }
+                    textChapter.layoutChannel.receiveAsFlow().collect()
+                    if (upContent) callBack?.upContent(offset, resetPageOffset)
+                }
+                1 -> {
+                    nextTextChapter?.cancelLayout()
+                    withContext(Main) {
+                        nextTextChapter = textChapter
+                    }
+                    for (page in textChapter.layoutChannel) {
+                        if (page.index > 1) {
+                            continue
+                        }
+                        if (upContent) callBack?.upContent(offset, resetPageOffset)
+                    }
+                }
+            }
+        } catch (e: CancellationException) {
+            return
+        } catch (e: Exception) {
+            AppLog.put("ChapterProvider ERROR", e)
+            appCtx.toastOnUi("ChapterProvider ERROR:\n${e.stackTraceStr}")
         }
     }
 

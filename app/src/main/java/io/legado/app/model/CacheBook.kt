@@ -19,6 +19,8 @@ import io.legado.app.service.CacheBookService
 import io.legado.app.utils.onEachParallel
 import io.legado.app.utils.postEvent
 import io.legado.app.utils.startService
+import io.legado.app.utils.toastOnUi
+import splitties.init.appCtx
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -427,6 +429,12 @@ object CacheBook {
                 /** 修正下载计数 */
                 postEvent(EventBus.SAVE_CONTENT, Pair(book, chapter))
                 waitDownloadSet.remove(chapterIndex)
+                return
+            }
+            if (bookSource.nextPageLazyLoad) {
+                AppLog.put("书源「${bookSource.bookSourceName}」已开启下一页懒加载，只允许在线阅读\n源URL: ${bookSource.bookSourceUrl}\n书名: ${book.name}")
+                appCtx.toastOnUi("该书源已开启下一页懒加载，只允许在线阅读")
+                stop()
                 return
             }
             if (BookHelp.hasImageContent(book, chapter)) {

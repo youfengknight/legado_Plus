@@ -287,9 +287,11 @@ class BookSourceEditActivity :
 
             R.id.menu_edit_json -> showSourceJsonEdit()
 
-            R.id.menu_save -> viewModel.save(getSource()) {
-                setResult(RESULT_OK, Intent().putExtra("origin", it.bookSourceUrl))
-                finish()
+            R.id.menu_save -> {
+                viewModel.save(getSource()) {
+                    setResult(RESULT_OK, Intent().putExtra("origin", it.bookSourceUrl))
+                    finish()
+                }
             }
 
             R.id.menu_debug_source -> viewModel.save(getSource()) { source ->
@@ -382,6 +384,15 @@ class BookSourceEditActivity :
             view.bottomPadding = if (imeHeight == 0) navigationBarHeight else 0
             softKeyboardTool.initialPadding = imeHeight
             windowInsets
+        }
+        binding.cbNextPageLazyLoad.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (isChecked) {
+                val nextContentUrl = contentEntities.find { it.key == "nextContentUrl" }?.value
+                if (nextContentUrl.isNullOrBlank()) {
+                    toastOnUi("未填正文下一页规则")
+                    buttonView.isChecked = false
+                }
+            }
         }
     }
 
@@ -547,6 +558,7 @@ class BookSourceEditActivity :
             add(EditEntity("payAction", cr.payAction, R.string.rule_pay_action))
             add(EditEntity("callBackJs", cr.callBackJs, R.string.rule_call_back))
         }
+        binding.cbNextPageLazyLoad.isChecked = bs.nextPageLazyLoad
         // 段评
 //        val rr = bs.getReviewRule()
 //        reviewEntities.clear()
@@ -584,6 +596,7 @@ class BookSourceEditActivity :
         }
         source.eventListener = binding.cbIsEventListener.isChecked
         source.customButton = binding.cbIsCustomButton.isChecked
+        source.nextPageLazyLoad = binding.cbNextPageLazyLoad.isChecked
         val searchRule = SearchRule()
         val exploreRule = ExploreRule()
         val bookInfoRule = BookInfoRule()

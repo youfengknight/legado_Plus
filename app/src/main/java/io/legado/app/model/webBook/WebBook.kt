@@ -686,6 +686,88 @@ object WebBook {
         }
     }
 
+    suspend fun getContentLazyAwait(
+        scope: CoroutineScope,
+        bookSource: BookSource,
+        book: Book,
+        bookChapter: BookChapter,
+        nextChapterUrl: String? = null,
+        callback: LazyContentCallback? = null
+    ): Pair<String, LazyContentManager?> {
+        FlowLogRecorder.setOperation(bookSource.bookSourceUrl, "正文(懒加载)")
+        val contentRule = bookSource.getContentRule()
+        if (contentRule.content.isNullOrEmpty()) {
+            Debug.log(bookSource.bookSourceUrl, "⇒正文规则为空,使用章节链接:${bookChapter.url}")
+            return Pair(bookChapter.url, null)
+        }
+        if (bookChapter.isVolume && bookChapter.url.startsWith(bookChapter.title)) {
+            Debug.log(bookSource.bookSourceUrl, "⇒一级目录正文不解析规则")
+            return Pair(bookChapter.tag ?: "", null)
+        }
+        return if (bookChapter.url == book.bookUrl && !book.tocHtml.isNullOrEmpty()) {
+            BookContent.analyzeContentLazy(
+                scope = scope,
+                bookSource = bookSource,
+                book = book,
+                bookChapter = bookChapter,
+                baseUrl = bookChapter.getAbsoluteURL(),
+                redirectUrl = bookChapter.getAbsoluteURL(),
+                body = book.tocHtml,
+                nextChapterUrl = nextChapterUrl,
+                callback = callback
+            )
+        } else {
+            val analyzeUrl = AnalyzeUrl(
+                mUrl = bookChapter.getAbsoluteURL(),
+                baseUrl = book.tocUrl,
+                source = bookSource,
+                ruleData = book,
+                chapter = bookChapter,
+                coroutineContext = currentCoroutineContext()
+            )
+            val checkJs = bookSource.loginCheckJs
+            val res = kotlin.runCatching {
+                analyzeUrl.getStrResponseAwait(
+                    jsStr = contentRule.webJs,
+                    sourceRegex = contentRule.sourceRegex
+                ).let {
+                    if (!checkJs.isNullOrBlank()) {
+                        analyzeUrl.evalJS(checkJs, it) as StrResponse
+                    } else {
+                        it
+                    }
+                }
+            }.getOrElse { throwable ->
+                if (!checkJs.isNullOrBlank()) {
+                    val errResponse = analyzeUrl.getErrStrResponse(throwable)
+                    try {
+                        (analyzeUrl.evalJS(checkJs, errResponse) as StrResponse).also {
+                            if (it.code() == 500) {
+                                throw throwable
+                            }
+                        }
+                    } catch (_: Throwable) {
+                        throw throwable
+                    }
+                } else {
+                    throw throwable
+                }
+            }
+            checkRedirect(bookSource, res)
+            BookContent.analyzeContentLazy(
+                scope = scope,
+                bookSource = bookSource,
+                book = book,
+                bookChapter = bookChapter,
+                baseUrl = bookChapter.getAbsoluteURL(),
+                redirectUrl = res.url,
+                body = res.body,
+                nextChapterUrl = nextChapterUrl,
+                callback = callback
+            )
+        }
+    }
+
     /**
      * 精准搜索（异步回调方式）
      *

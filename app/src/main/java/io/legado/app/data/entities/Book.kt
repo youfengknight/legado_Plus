@@ -458,7 +458,7 @@ data class Book(
         var useReplaceRule: Boolean? = null,// 正文使用净化替换规则
         var delTag: Long = 0L,//去除标签
         var ttsEngine: String? = null,
-        var splitLongChapter: Boolean = true,
+        var splitLongChapter: Boolean = false,
         var readSimulating: Boolean = false,
         var startDate: LocalDate? = null,
         var startChapter: Int? = null,     // 用户设置的起始章节

@@ -8,6 +8,9 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
+import com.google.gson.JsonElement
+import com.google.gson.JsonSerializationContext
+import com.google.gson.JsonSerializer
 import io.legado.app.constant.AppPattern
 import io.legado.app.constant.BookSourceType
 import io.legado.app.data.entities.rule.BookInfoRule
@@ -18,9 +21,11 @@ import io.legado.app.data.entities.rule.SearchRule
 import io.legado.app.data.entities.rule.TocRule
 import io.legado.app.model.AudioPlay
 import io.legado.app.utils.GSON
+import io.legado.app.utils.INITIAL_GSON
 import io.legado.app.utils.fromJsonObject
 import io.legado.app.utils.splitNotBlank
 import kotlinx.parcelize.Parcelize
+import java.lang.reflect.Type
 
 @Suppress("unused")
 @Parcelize
@@ -99,7 +104,9 @@ data class BookSource(
     @ColumnInfo(defaultValue = "0")
     var eventListener: Boolean = false, // 是否监听事件来执行回调规则
     @ColumnInfo(defaultValue = "0")
-    var customButton: Boolean = false //由书源控制的自定义按钮
+    var customButton: Boolean = false, //由书源控制的自定义按钮
+    @ColumnInfo(defaultValue = "0")
+    var nextPageLazyLoad: Boolean = false //下一页懒加载
 ) : Parcelable, BaseSource {
 
     override fun getTag(): String {
@@ -262,6 +269,16 @@ data class BookSource(
     }
 
     private fun equal(a: String?, b: String?) = a == b || (a.isNullOrEmpty() && b.isNullOrEmpty())
+
+    companion object {
+        val jsonSerializer = JsonSerializer<BookSource> { src, _, _ ->
+            val jsonObject = INITIAL_GSON.toJsonTree(src).asJsonObject
+            if (src.nextPageLazyLoad == false) {
+                jsonObject.remove("nextPageLazyLoad")
+            }
+            jsonObject as JsonElement
+        }
+    }
 
     class Converters {
 

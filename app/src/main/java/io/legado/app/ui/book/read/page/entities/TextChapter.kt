@@ -6,6 +6,7 @@ import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookChapter
 import io.legado.app.data.entities.ReplaceRule
 import io.legado.app.help.book.BookContent
+import io.legado.app.model.webBook.LazyContentManager
 import io.legado.app.ui.book.read.page.provider.LayoutProgressListener
 import io.legado.app.ui.book.read.page.provider.TextChapterLayout
 import io.legado.app.utils.fastBinarySearchBy
@@ -34,8 +35,15 @@ data class TextChapter(
     val pages: List<TextPage> get() = textPages
 
     private var layout: TextChapterLayout? = null
+    
+    var lazyContent: LazyContentManager? = null
+    var useLazyLoading: Boolean = false
 
     val layoutChannel get() = layout!!.channel
+
+    fun appendContent(newContents: List<String>) {
+        layout?.appendContent(newContents)
+    }
 
     fun getPage(index: Int): TextPage? {
         return pages.getOrNull(index)
