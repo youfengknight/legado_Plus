@@ -129,6 +129,8 @@ class ReadRssActivity : VMBaseActivity<ActivityRssReadBinding, ReadRssViewModel>
         }
     }
     private val rssJsExtensions by lazy { RssJsExtensions(this, viewModel.rssSource) }
+    
+    private var perfTracker: RssWebViewPerfTracker? = null
 
     private val refreshNameList: MutableList<String> by lazy { mutableListOf() }
     private fun refresh() {
@@ -390,7 +392,20 @@ class ReadRssActivity : VMBaseActivity<ActivityRssReadBinding, ReadRssViewModel>
                 upWebviewSettings()
                 initJavascriptInterface()
                 val rssSource = viewModel.rssSource
+                
+                val showPerfLog = rssSource?.showWebLog == true
+                if (showPerfLog && rssSource != null) {
+                    perfTracker = RssWebViewPerfTracker(rssSource)
+                    perfTracker!!.start()
+                    perfTracker!!.htmlParseStart()
+                }
+                
                 val html = viewModel.clHtml(content, rssSource?.style)
+                
+                if (showPerfLog) {
+                    perfTracker?.htmlParseEnd()
+                }
+                
                 val url = NetworkUtils.getAbsoluteURL(it.origin, it.link).substringBefore("@js")
                 val baseUrl = if (rssSource?.loadWithBaseUrl == false) null else url
                 currentWebView.loadDataWithBaseURL(
@@ -402,12 +417,26 @@ class ReadRssActivity : VMBaseActivity<ActivityRssReadBinding, ReadRssViewModel>
             upWebviewSettings(urlState.getUserAgent())
             initJavascriptInterface()
             CookieManager.applyToWebView(urlState.url)
+            
+            val source = viewModel.rssSource
+            if (source?.showWebLog == true) {
+                perfTracker = RssWebViewPerfTracker(source)
+                perfTracker!!.start()
+            }
+            
             currentWebView.loadUrl(urlState.url, urlState.headerMap)
         }
         viewModel.htmlLiveData.observe(this) { html ->
             viewModel.rssSource?.let {
                 upWebviewSettings()
                 initJavascriptInterface()
+                
+                if (it.showWebLog) {
+                    perfTracker = RssWebViewPerfTracker(it)
+                    perfTracker!!.start()
+                    perfTracker!!.htmlParseStart()
+                }
+                
                 val baseUrl = if (it.loadWithBaseUrl) it.sourceUrl else null
                 currentWebView.loadDataWithBaseURL(
                     baseUrl, html, "text/html", "utf-8", it.sourceUrl
@@ -608,6 +637,16 @@ class ReadRssActivity : VMBaseActivity<ActivityRssReadBinding, ReadRssViewModel>
             }
             super.onPageStarted(view, url, favicon)
             currentWebView.evaluateJavascript(basicJs, null)
+            
+            val source = viewModel.rssSource
+            if (source?.showWebLog == true) {
+                // 如果还没有开始追踪，才创建新的追踪器
+                // 这样可以保留 contentLiveData 等地方已经记录的阶段数据
+                if (perfTracker == null || perfTracker!!.startTime == 0L) {
+                    perfTracker = RssWebViewPerfTracker(source)
+                    perfTracker!!.start()
+                }
+            }
         }
 
         private var jsInjected = false
@@ -634,11 +673,23 @@ class ReadRssActivity : VMBaseActivity<ActivityRssReadBinding, ReadRssViewModel>
             } else if (!jsInjected && url == nameUrl) {
                 jsInjected = true
                 val preloadJs = source.preloadJs ?: ""
-                return WebResourceResponse(
+                val injectionContent = "(() => {$JS_INJECTION\n$preloadJs\n})();"
+                
+                if (source.showWebLog) {
+                    perfTracker?.jsInjectStart()
+                }
+                
+                val response = WebResourceResponse(
                     "text/javascript",
                     "utf-8",
-                    ByteArrayInputStream("(() => {$JS_INJECTION\n$preloadJs\n})();".toByteArray())
+                    ByteArrayInputStream(injectionContent.toByteArray())
                 )
+                
+                if (source.showWebLog) {
+                    perfTracker?.jsInjectEnd(injectionContent.length)
+                }
+                
+                return response
             }
             val blacklist = source.contentBlacklist?.splitNotBlank(",")
             if (!blacklist.isNullOrEmpty()) {
@@ -672,6 +723,13 @@ class ReadRssActivity : VMBaseActivity<ActivityRssReadBinding, ReadRssViewModel>
 
         private suspend fun getModifiedContentWithJs(url: String, request: WebResourceRequest): WebResourceResponse? {
             try {
+                val source = viewModel.rssSource
+                val showPerfLog = source?.showWebLog == true
+                
+                if (showPerfLog) {
+                    perfTracker?.htmlDownloadStart()
+                }
+                
                 val cookie = webCookieManager.getCookie(url)
                 val res = okHttpClient.newCallResponse {
                     url(url)
@@ -683,6 +741,12 @@ class ReadRssActivity : VMBaseActivity<ActivityRssReadBinding, ReadRssViewModel>
                         addHeader(key, value)
                     }
                 }
+                
+                if (showPerfLog) {
+                    perfTracker?.htmlDownloadEnd()
+                    perfTracker?.htmlParseStart()
+                }
+                
                 res.headers("Set-Cookie").forEach { setCookie ->
                     webCookieManager.setCookie(url, setCookie)
                 }
@@ -705,6 +769,11 @@ class ReadRssActivity : VMBaseActivity<ActivityRssReadBinding, ReadRssViewModel>
                         originalText
                     }
                 }
+                
+                if (showPerfLog) {
+                    perfTracker?.htmlParseEnd()
+                }
+                
                 return WebResourceResponse(
                     mimeType,
                     charsetSre,
@@ -717,6 +786,12 @@ class ReadRssActivity : VMBaseActivity<ActivityRssReadBinding, ReadRssViewModel>
 
         override fun onPageFinished(view: WebView, url: String) {
             super.onPageFinished(view, url)
+            
+            if (viewModel.rssSource?.showWebLog == true) {
+                perfTracker?.domRenderEnd()
+                perfTracker?.report()
+            }
+            
             view.title?.let { title ->
                 if (title != url
                     && title != view.url
